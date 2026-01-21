@@ -4,9 +4,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Instagram, Heart, MessageCircle, Users, Video } from 'lucide-react';
+import { Moon, Heart, MessageCircle, Lock } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -27,9 +27,9 @@ function LandingPage({ onLogin }) {
     try {
       const response = await axios.post(`${API}/auth/login`, loginForm);
       onLogin(response.data.user, response.data.token);
-      toast.success('Welcome back!');
+      toast.success('welcome back');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Login failed');
+      toast.error(error.response?.data?.detail || 'login failed');
     } finally {
       setLoading(false);
     }
@@ -38,196 +38,234 @@ function LandingPage({ onLogin }) {
   const handleSignup = async (e) => {
     e.preventDefault();
     if (signupForm.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+      toast.error('password must be at least 6 characters');
       return;
     }
     setLoading(true);
     try {
       const response = await axios.post(`${API}/auth/signup`, signupForm);
       onLogin(response.data.user, response.data.token);
-      toast.success('Account created successfully!');
+      toast.success('welcome to unsaid');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Signup failed');
+      toast.error(error.response?.data?.detail || 'signup failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl grid md:grid-cols-2 gap-12 items-center">
+    <div className="min-h-screen bg-[#1a1d28] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Subtle background glow */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#B4A7D6]/5 via-transparent to-transparent pointer-events-none"></div>
+      
+      <div className="w-full max-w-6xl grid md:grid-cols-2 gap-16 items-center relative z-10 animate-fade-in">
         {/* Left side - Branding */}
-        <div className="text-white space-y-8 hidden md:block">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <Instagram className="w-16 h-16 text-purple-500" />
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
-                InstaSocial
+        <div className="text-[#e5e5e5] space-y-12 hidden md:block">
+          <div className="space-y-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-[#B4A7D6]/10 rounded-full">
+                <Moon className="w-10 h-10 text-[#B4A7D6]" />
+              </div>
+              <h1 className="text-6xl font-light tracking-tight text-[#e5e5e5]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                unsaid
               </h1>
             </div>
-            <p className="text-xl text-gray-400">
-              Share moments, connect with friends, and explore the world
+            <p className="text-xl text-[#9ca3af] leading-relaxed font-light">
+              a space for what you never say out loud
             </p>
           </div>
 
-          <div className="space-y-6">
-            <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-              <div className="p-3 bg-purple-500/20 rounded-lg">
-                <Heart className="w-6 h-6 text-purple-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Share Stories</h3>
-                <p className="text-sm text-gray-400">Share your daily moments that disappear in 24 hours</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-              <div className="p-3 bg-pink-500/20 rounded-lg">
-                <Video className="w-6 h-6 text-pink-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Create Reels</h3>
-                <p className="text-sm text-gray-400">Share short entertaining videos with the world</p>
+          <div className="space-y-8">
+            <div className="space-y-2">
+              <div className="flex items-start space-x-4 p-5 glass-card rounded-2xl slow-transition glass-hover">
+                <div className="p-2 bg-[#B4A7D6]/10 rounded-lg mt-1">
+                  <Heart className="w-5 h-5 text-[#B4A7D6]" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-[#e5e5e5] mb-1.5">emotion over flex</h3>
+                  <p className="text-sm text-[#9ca3af] leading-relaxed font-light">
+                    no follower counts, no viral pressure. just honest thoughts
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-              <div className="p-3 bg-blue-500/20 rounded-lg">
-                <MessageCircle className="w-6 h-6 text-blue-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Direct Messages</h3>
-                <p className="text-sm text-gray-400">Chat privately with friends and followers</p>
+            <div className="space-y-2">
+              <div className="flex items-start space-x-4 p-5 glass-card rounded-2xl slow-transition glass-hover">
+                <div className="p-2 bg-[#B4A7D6]/10 rounded-lg mt-1">
+                  <Lock className="w-5 h-5 text-[#B4A7D6]" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-[#e5e5e5] mb-1.5">post anonymously</h3>
+                  <p className="text-sm text-[#9ca3af] leading-relaxed font-light">
+                    share what matters without judgment
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-              <div className="p-3 bg-green-500/20 rounded-lg">
-                <Users className="w-6 h-6 text-green-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Follow & Connect</h3>
-                <p className="text-sm text-gray-400">Build your community and discover new people</p>
+            <div className="space-y-2">
+              <div className="flex items-start space-x-4 p-5 glass-card rounded-2xl slow-transition glass-hover">
+                <div className="p-2 bg-[#B4A7D6]/10 rounded-lg mt-1">
+                  <MessageCircle className="w-5 h-5 text-[#B4A7D6]" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-[#e5e5e5] mb-1.5">calm conversations</h3>
+                  <p className="text-sm text-[#9ca3af] leading-relaxed font-light">
+                    no notifications spam, just meaningful connections
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Right side - Auth Forms */}
-        <div>
-          <Card className="bg-[#1a1a1a] border-white/10">
-            <CardHeader>
-              <CardTitle className="text-white text-2xl">Welcome</CardTitle>
-              <CardDescription className="text-gray-400">
-                Sign in to your account or create a new one
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+        <div className="animate-slide-up">
+          <Card className="bg-[#212530]/50 glass-card border-[#B4A7D6]/10 calm-shadow">
+            <div className="p-8 space-y-6">
+              <div className="space-y-2 text-center md:text-left">
+                <h2 className="text-3xl font-light text-[#e5e5e5]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  welcome
+                </h2>
+                <p className="text-[#9ca3af] font-light">
+                  give your thoughts a place to rest
+                </p>
+              </div>
+
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-white/5">
-                  <TabsTrigger value="login" className="data-[state=active]:bg-purple-600">
-                    Login
+                <TabsList className="grid w-full grid-cols-2 bg-[#2a2f3f]/50 border border-[#B4A7D6]/10">
+                  <TabsTrigger 
+                    value="login" 
+                    data-testid="login-tab"
+                    className="data-[state=active]:bg-[#B4A7D6]/20 data-[state=active]:text-[#B4A7D6] slow-transition"
+                  >
+                    sign in
                   </TabsTrigger>
-                  <TabsTrigger value="signup" className="data-[state=active]:bg-purple-600">
-                    Sign Up
+                  <TabsTrigger 
+                    value="signup" 
+                    data-testid="signup-tab"
+                    className="data-[state=active]:bg-[#B4A7D6]/20 data-[state=active]:text-[#B4A7D6] slow-transition"
+                  >
+                    create account
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="login">
-                  <form onSubmit={handleLogin} className="space-y-4">
+                <TabsContent value="login" className="mt-6">
+                  <form onSubmit={handleLogin} className="space-y-5">
                     <div className="space-y-2">
-                      <Label htmlFor="login-email" className="text-white">Email</Label>
+                      <Label htmlFor="login-email" className="text-[#e5e5e5] font-light text-sm">
+                        email
+                      </Label>
                       <Input
                         id="login-email"
+                        data-testid="login-email"
                         type="email"
                         placeholder="your@email.com"
                         value={loginForm.email}
                         onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                         required
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+                        className="bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] placeholder:text-[#6b7280] h-12 slow-transition focus:border-[#B4A7D6]/30"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="login-password" className="text-white">Password</Label>
+                      <Label htmlFor="login-password" className="text-[#e5e5e5] font-light text-sm">
+                        password
+                      </Label>
                       <Input
                         id="login-password"
+                        data-testid="login-password"
                         type="password"
                         placeholder="••••••••"
                         value={loginForm.password}
                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                         required
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+                        className="bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] placeholder:text-[#6b7280] h-12 slow-transition focus:border-[#B4A7D6]/30"
                       />
                     </div>
                     <Button
                       type="submit"
+                      data-testid="login-submit"
                       disabled={loading}
-                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      className="w-full bg-[#B4A7D6] hover:bg-[#a294c4] text-[#1a1d28] h-12 font-medium slow-transition"
                     >
-                      {loading ? 'Signing in...' : 'Sign In'}
+                      {loading ? 'signing in...' : 'sign in'}
                     </Button>
                   </form>
                 </TabsContent>
 
-                <TabsContent value="signup">
-                  <form onSubmit={handleSignup} className="space-y-4">
+                <TabsContent value="signup" className="mt-6">
+                  <form onSubmit={handleSignup} className="space-y-5">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-username" className="text-white">Username</Label>
+                      <Label htmlFor="signup-username" className="text-[#e5e5e5] font-light text-sm">
+                        username
+                      </Label>
                       <Input
                         id="signup-username"
+                        data-testid="signup-username"
                         placeholder="johndoe"
                         value={signupForm.username}
                         onChange={(e) => setSignupForm({ ...signupForm, username: e.target.value })}
                         required
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+                        className="bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] placeholder:text-[#6b7280] h-12 slow-transition focus:border-[#B4A7D6]/30"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-displayName" className="text-white">Display Name</Label>
+                      <Label htmlFor="signup-displayName" className="text-[#e5e5e5] font-light text-sm">
+                        display name
+                      </Label>
                       <Input
                         id="signup-displayName"
+                        data-testid="signup-displayname"
                         placeholder="John Doe"
                         value={signupForm.displayName}
                         onChange={(e) => setSignupForm({ ...signupForm, displayName: e.target.value })}
                         required
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+                        className="bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] placeholder:text-[#6b7280] h-12 slow-transition focus:border-[#B4A7D6]/30"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email" className="text-white">Email</Label>
+                      <Label htmlFor="signup-email" className="text-[#e5e5e5] font-light text-sm">
+                        email
+                      </Label>
                       <Input
                         id="signup-email"
+                        data-testid="signup-email"
                         type="email"
                         placeholder="your@email.com"
                         value={signupForm.email}
                         onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
                         required
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+                        className="bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] placeholder:text-[#6b7280] h-12 slow-transition focus:border-[#B4A7D6]/30"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password" className="text-white">Password</Label>
+                      <Label htmlFor="signup-password" className="text-[#e5e5e5] font-light text-sm">
+                        password
+                      </Label>
                       <Input
                         id="signup-password"
+                        data-testid="signup-password"
                         type="password"
                         placeholder="••••••••"
                         value={signupForm.password}
                         onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
                         required
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+                        className="bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] placeholder:text-[#6b7280] h-12 slow-transition focus:border-[#B4A7D6]/30"
                       />
                     </div>
                     <Button
                       type="submit"
+                      data-testid="signup-submit"
                       disabled={loading}
-                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      className="w-full bg-[#B4A7D6] hover:bg-[#a294c4] text-[#1a1d28] h-12 font-medium slow-transition"
                     >
-                      {loading ? 'Creating account...' : 'Create Account'}
+                      {loading ? 'creating account...' : 'create account'}
                     </Button>
                   </form>
                 </TabsContent>
               </Tabs>
-            </CardContent>
+            </div>
           </Card>
         </div>
       </div>
