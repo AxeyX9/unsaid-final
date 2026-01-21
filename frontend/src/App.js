@@ -85,8 +85,11 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="text-white text-2xl font-semibold">Loading...</div>
+      <div className="min-h-screen bg-[#1a1d28] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-2 border-[#B4A7D6]/30 border-t-[#B4A7D6] rounded-full animate-spin mx-auto"></div>
+          <div className="text-[#e5e5e5] text-xl font-light">loading...</div>
+        </div>
       </div>
     );
   }
