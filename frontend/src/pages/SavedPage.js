@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Bookmark } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import PostCard from '@/components/PostCard';
-import { Bookmark } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 function SavedPage({ user, onLogout }) {
-  const [savedPosts, setSavedPosts] = useState([]);
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,45 +18,58 @@ function SavedPage({ user, onLogout }) {
 
   const loadSavedPosts = async () => {
     try {
-      const response = await axios.get(`${API}/saved/posts`);
-      setSavedPosts(response.data);
+      const response = await axios.get(`${API}/saved-posts`);
+      setPosts(response.data);
     } catch (error) {
-      toast.error('Failed to load saved posts');
+      toast.error('failed to load saved posts');
     } finally {
       setLoading(false);
     }
   };
 
   const handlePostUpdate = (updatedPost) => {
-    setSavedPosts(savedPosts.map(p => p.id === updatedPost.id ? updatedPost : p));
+    if (!updatedPost.isSaved) {
+      setPosts(posts.filter(p => p.id !== updatedPost.id));
+    } else {
+      setPosts(posts.map(p => p.id === updatedPost.id ? updatedPost : p));
+    }
   };
 
   const handlePostDelete = (postId) => {
-    setSavedPosts(savedPosts.filter(p => p.id !== postId));
+    setPosts(posts.filter(p => p.id !== postId));
   };
 
   return (
     <AppLayout user={user} onLogout={onLogout}>
-      <div className="max-w-2xl mx-auto pb-20">
-        <div className="flex items-center space-x-3 mb-6">
-          <Bookmark className="w-8 h-8 text-purple-400" />
-          <h1 className="text-3xl font-bold">Saved Posts</h1>
+      <div className="max-w-3xl mx-auto pb-20 px-4">
+        <div className="mb-10 pt-6">
+          <h1 
+            className="text-3xl font-light text-[#e5e5e5] mb-2"
+            style={{ fontFamily: 'Manrope, sans-serif' }}
+          >
+            saved thoughts
+          </h1>
+          <p className="text-[#9ca3af] font-light">
+            keep what matters close
+          </p>
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-            <p className="text-gray-400 mt-4">Loading saved posts...</p>
+          <div className="text-center py-16">
+            <div className="w-12 h-12 border-2 border-[#B4A7D6]/30 border-t-[#B4A7D6] rounded-full animate-spin mx-auto"></div>
+            <p className="text-[#9ca3af] mt-4 font-light">loading...</p>
           </div>
-        ) : savedPosts.length === 0 ? (
-          <div className="text-center py-12 bg-[#1a1a1a] rounded-xl border border-white/10">
-            <Bookmark className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-            <p className="text-gray-400 text-lg">No saved posts yet</p>
-            <p className="text-gray-500 text-sm mt-2">Save posts to view them later</p>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-16 glass-card rounded-2xl">
+            <Bookmark className="w-12 h-12 text-[#9ca3af] mx-auto mb-4" />
+            <p className="text-[#9ca3af] text-lg font-light">no saved posts yet</p>
+            <p className="text-[#6b7280] text-sm mt-2 font-light">
+              bookmark posts you want to revisit later
+            </p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {savedPosts.map(post => (
+          <div className="space-y-8">
+            {posts.map(post => (
               <PostCard
                 key={post.id}
                 post={post}
