@@ -1,254 +1,120 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Search, User, Hash, TrendingUp } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search as SearchIcon, User } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
+import { Input } from '@/components/ui/input';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 function SearchPage({ user, onLogout }) {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState({ users: [], hashtags: [], posts: [] });
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [trending, setTrending] = useState([]);
+  const [searched, setSearched] = useState(false);
 
-  useEffect(() => {
-    loadTrending();
-  }, []);
-
-  const loadTrending = async () => {
-    try {
-      const response = await axios.get(`${API}/trending/hashtags`);
-      setTrending(response.data);
-    } catch (error) {
-      console.error('Failed to load trending');
-    }
-  };
-
-  const handleSearch = async (query) => {
-    setSearchQuery(query);
-    
-    if (query.trim().length < 2) {
-      setSearchResults({ users: [], hashtags: [], posts: [] });
-      return;
-    }
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
 
     setLoading(true);
+    setSearched(true);
     try {
-      const response = await axios.get(`${API}/search?q=${encodeURIComponent(query)}`);
-      setSearchResults(response.data);
+      const response = await axios.get(`${API}/users/search/${query}`);
+      setResults(response.data);
     } catch (error) {
-      toast.error('Search failed');
+      toast.error('search failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFollowUser = async (userId, isFollowing) => {
-    try {
-      if (isFollowing) {
-        await axios.post(`${API}/users/${userId}/unfollow`);
-      } else {
-        await axios.post(`${API}/users/${userId}/follow`);
-      }
-      
-      // Update local state
-      setSearchResults(prev => ({
-        ...prev,
-        users: prev.users.map(u => 
-          u.id === userId ? { ...u, isFollowing: !isFollowing } : u
-        )
-      }));
-    } catch (error) {
-      toast.error('Failed to update follow status');
-    }
-  };
-
   return (
     <AppLayout user={user} onLogout={onLogout}>
-      <div className="max-w-4xl mx-auto pb-20">
-        {/* Search Header */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search users, hashtags, posts..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-12 bg-[#1a1a1a] border-white/10 text-white h-12 text-lg"
-            />
-          </div>
+      <div className="max-w-3xl mx-auto pb-20 px-4">
+        <div className="mb-10 pt-6">
+          <h1 
+            className="text-3xl font-light text-[#e5e5e5] mb-2"
+            style={{ fontFamily: 'Manrope, sans-serif' }}
+          >
+            find people
+          </h1>
+          <p className="text-[#9ca3af] font-light">
+            discover and connect with others
+          </p>
         </div>
 
-        {searchQuery.trim().length < 2 ? (
-          /* Trending Section */
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold mb-4 flex items-center">
-                <TrendingUp className="w-6 h-6 mr-2 text-purple-400" />
-                Trending Hashtags
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {trending.map((tag, index) => (
-                  <div
-                    key={index}
-                    className="bg-[#1a1a1a] rounded-xl p-4 border border-white/10 cursor-pointer hover:bg-white/5 transition-colors"
-                    onClick={() => handleSearch(tag.hashtag)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-purple-400 font-medium text-lg">{tag.hashtag}</div>
-                        <div className="text-gray-400 text-sm">{tag.count} posts</div>
-                      </div>
-                      <Hash className="w-8 h-8 text-purple-400/30" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* Search Bar */}
+        <form onSubmit={handleSearch} className="mb-10">
+          <div className="relative">
+            <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
+            <Input
+              data-testid="search-input"
+              type="text"
+              placeholder="search by name or username..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] placeholder:text-[#6b7280] h-14 pl-12 pr-4 rounded-xl slow-transition focus:border-[#B4A7D6]/30"
+            />
+          </div>
+        </form>
+
+        {/* Results */}
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="w-12 h-12 border-2 border-[#B4A7D6]/30 border-t-[#B4A7D6] rounded-full animate-spin mx-auto"></div>
+            <p className="text-[#9ca3af] mt-4 font-light">searching...</p>
+          </div>
+        ) : !searched ? (
+          <div className="text-center py-16 glass-card rounded-2xl">
+            <SearchIcon className="w-12 h-12 text-[#9ca3af] mx-auto mb-4" />
+            <p className="text-[#9ca3af] text-lg font-light">search for people</p>
+            <p className="text-[#6b7280] text-sm mt-2 font-light">
+              find someone to connect with
+            </p>
+          </div>
+        ) : results.length === 0 ? (
+          <div className="text-center py-16 glass-card rounded-2xl">
+            <User className="w-12 h-12 text-[#9ca3af] mx-auto mb-4" />
+            <p className="text-[#9ca3af] text-lg font-light">no results found</p>
+            <p className="text-[#6b7280] text-sm mt-2 font-light">
+              try a different search term
+            </p>
           </div>
         ) : (
-          /* Search Results */
-          <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-[#1a1a1a] mb-6">
-              <TabsTrigger value="users">
-                Users ({searchResults.users.length})
-              </TabsTrigger>
-              <TabsTrigger value="hashtags">
-                Hashtags ({searchResults.hashtags.length})
-              </TabsTrigger>
-              <TabsTrigger value="posts">
-                Posts ({searchResults.posts.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="users" className="space-y-4">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
-                </div>
-              ) : searchResults.users.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  No users found
-                </div>
-              ) : (
-                searchResults.users.map(foundUser => (
-                  <div
-                    key={foundUser.id}
-                    className="bg-[#1a1a1a] rounded-xl p-4 border border-white/10 flex items-center justify-between"
-                  >
-                    <div
-                      className="flex items-center space-x-3 cursor-pointer flex-1"
-                      onClick={() => navigate(`/profile/${foundUser.id}`)}
-                    >
-                      <img
-                        src={foundUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${foundUser.username}`}
-                        alt={foundUser.displayName}
-                        className="w-12 h-12 rounded-full border-2 border-purple-500"
-                      />
-                      <div>
-                        <div className="font-medium">{foundUser.displayName}</div>
-                        <div className="text-sm text-gray-400">@{foundUser.username}</div>
-                        {foundUser.bio && (
-                          <div className="text-sm text-gray-500 mt-1">{foundUser.bio}</div>
-                        )}
-                      </div>
-                    </div>
-                    {foundUser.id !== user.id && (
-                      <button
-                        onClick={() => handleFollowUser(foundUser.id, foundUser.isFollowing)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                          foundUser.isFollowing
-                            ? 'bg-white/10 hover:bg-white/20'
-                            : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
-                        }`}
-                      >
-                        {foundUser.isFollowing ? 'Following' : 'Follow'}
-                      </button>
+          <div className="space-y-3">
+            {results.map(result => (
+              <div
+                key={result.id}
+                data-testid={`search-result-${result.id}`}
+                onClick={() => navigate(`/profile/${result.id}`)}
+                className="glass-card rounded-xl p-5 slow-transition hover:border-[#B4A7D6]/30 cursor-pointer animate-fade-in"
+              >
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={result.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${result.username}`}
+                    alt={result.displayName}
+                    className="w-14 h-14 rounded-full border border-[#B4A7D6]/20"
+                  />
+                  <div className="flex-1">
+                    <h3 className="text-[#e5e5e5] font-medium">{result.displayName}</h3>
+                    <p className="text-[#9ca3af] text-sm font-light">@{result.username}</p>
+                    {result.bio && (
+                      <p className="text-[#6b7280] text-sm mt-1 font-light line-clamp-1">
+                        {result.bio}
+                      </p>
                     )}
                   </div>
-                ))
-              )}
-            </TabsContent>
-
-            <TabsContent value="hashtags" className="space-y-4">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
-                </div>
-              ) : searchResults.hashtags.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  No hashtags found
-                </div>
-              ) : (
-                searchResults.hashtags.map((tag, index) => (
-                  <div
-                    key={index}
-                    className="bg-[#1a1a1a] rounded-xl p-4 border border-white/10 cursor-pointer hover:bg-white/5 transition-colors"
-                    onClick={() => handleSearch(tag.hashtag)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-purple-400 font-medium text-lg">{tag.hashtag}</div>
-                        <div className="text-gray-400 text-sm">{tag.count} posts</div>
-                      </div>
-                      <Hash className="w-8 h-8 text-purple-400/30" />
-                    </div>
+                  <div className="text-sm text-[#9ca3af] font-light">
+                    {result.followersCount} connections
                   </div>
-                ))
-              )}
-            </TabsContent>
-
-            <TabsContent value="posts" className="space-y-6">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
                 </div>
-              ) : searchResults.posts.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  No posts found
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-1">
-                  {searchResults.posts.map(post => (
-                    <div
-                      key={post.id}
-                      className="aspect-square cursor-pointer group relative overflow-hidden"
-                      onClick={() => navigate(`/home`)}
-                    >
-                      {post.imageUrl ? (
-                        <img
-                          src={post.imageUrl}
-                          alt="Post"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center p-4">
-                          <p className="text-sm text-center line-clamp-4">{post.text}</p>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="text-white font-medium">
-                            {Object.values(post.reactions).reduce((a, b) => a + b, 0)} reactions
-                          </div>
-                          <div className="text-white/70 text-sm">
-                            {post.commentsCount} comments
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </AppLayout>
