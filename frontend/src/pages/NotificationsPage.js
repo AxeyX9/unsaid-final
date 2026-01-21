@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Heart, MessageCircle, UserPlus, User as UserIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Heart, MessageCircle, User, Bell } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -17,18 +17,25 @@ function NotificationsPage({ user, onLogout }) {
 
   useEffect(() => {
     loadNotifications();
+    markAsRead();
   }, []);
 
   const loadNotifications = async () => {
     try {
       const response = await axios.get(`${API}/notifications`);
       setNotifications(response.data);
-      // Mark as read
-      await axios.post(`${API}/notifications/read`);
     } catch (error) {
-      toast.error('Failed to load notifications');
+      toast.error('failed to load notifications');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const markAsRead = async () => {
+    try {
+      await axios.post(`${API}/notifications/read`);
+    } catch (error) {
+      // Silent fail
     }
   };
 
@@ -36,171 +43,92 @@ function NotificationsPage({ user, onLogout }) {
     switch (type) {
       case 'like':
       case 'reaction':
-        return <Heart className="w-5 h-5 text-pink-500" />;
+        return <Heart className="w-5 h-5 text-[#B4A7D6]" />;
       case 'comment':
-        return <MessageCircle className="w-5 h-5 text-blue-500" />;
+        return <MessageCircle className="w-5 h-5 text-[#B4A7D6]" />;
       case 'follow':
-        return <UserPlus className="w-5 h-5 text-green-500" />;
+        return <User className="w-5 h-5 text-[#B4A7D6]" />;
       default:
-        return <UserIcon className="w-5 h-5 text-gray-500" />;
-    }
-  };
-
-  const getNotificationText = (notification) => {
-    switch (notification.type) {
-      case 'like':
-      case 'reaction':
-        return `reacted to your post`;
-      case 'comment':
-        return `commented on your post`;
-      case 'follow':
-        return `started following you`;
-      default:
-        return notification.text;
+        return <Bell className="w-5 h-5 text-[#B4A7D6]" />;
     }
   };
 
   const handleNotificationClick = (notification) => {
     if (notification.postId) {
-      navigate('/home');
-    } else if (notification.fromUserId) {
-      navigate(`/profile/${notification.fromUserId}`);
+      navigate(`/home`); // Navigate to home where the post would be
+    } else if (notification.type === 'follow') {
+      navigate(`/profile/${notification.actorId}`);
     }
   };
 
   return (
     <AppLayout user={user} onLogout={onLogout}>
-      <div className="max-w-2xl mx-auto pb-20">
-        <h1 className="text-3xl font-bold mb-6">Notifications</h1>
+      <div className="max-w-3xl mx-auto pb-20 px-4">
+        <div className="mb-10 pt-6">
+          <h1 
+            className="text-3xl font-light text-[#e5e5e5] mb-2"
+            style={{ fontFamily: 'Manrope, sans-serif' }}
+          >
+            notifications
+          </h1>
+          <p className="text-[#9ca3af] font-light">
+            quiet updates, no noise
+          </p>
+        </div>
 
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-[#1a1a1a] mb-6">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="follows">Follows</TabsTrigger>
-            <TabsTrigger value="interactions">Interactions</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all">
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="text-center py-12 bg-[#1a1a1a] rounded-xl border border-white/10">
-                <p className="text-gray-400">No notifications yet</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {notifications.map(notification => (
-                  <div
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
-                    className={`bg-[#1a1a1a] rounded-xl p-4 border border-white/10 flex items-center space-x-4 cursor-pointer hover:bg-white/5 transition-colors ${
-                      !notification.read ? 'border-purple-500/50' : ''
-                    }`}
-                  >
-                    <div className="flex-shrink-0">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <img
-                      src={notification.fromUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${notification.fromUser?.username}`}
-                      alt={notification.fromUser?.displayName}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <p className="text-white">
-                        <span className="font-medium">{notification.fromUser?.displayName}</span>
-                        {' '}
-                        <span className="text-gray-400">{getNotificationText(notification)}</span>
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                      </p>
-                    </div>
-                    {notification.postImage && (
-                      <img
-                        src={notification.postImage}
-                        alt="Post"
-                        className="w-12 h-12 rounded object-cover"
-                      />
-                    )}
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="w-12 h-12 border-2 border-[#B4A7D6]/30 border-t-[#B4A7D6] rounded-full animate-spin mx-auto"></div>
+            <p className="text-[#9ca3af] mt-4 font-light">loading...</p>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="text-center py-16 glass-card rounded-2xl">
+            <Bell className="w-12 h-12 text-[#9ca3af] mx-auto mb-4" />
+            <p className="text-[#9ca3af] text-lg font-light">no notifications yet</p>
+            <p className="text-[#6b7280] text-sm mt-2 font-light">
+              you'll see updates here when someone interacts with you
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {notifications.map(notification => (
+              <div
+                key={notification.id}
+                data-testid={`notification-${notification.id}`}
+                onClick={() => handleNotificationClick(notification)}
+                className="glass-card rounded-xl p-5 slow-transition hover:border-[#B4A7D6]/30 cursor-pointer animate-fade-in"
+              >
+                <div className="flex items-start space-x-4">
+                  <div className="p-2.5 bg-[#B4A7D6]/10 rounded-full flex-shrink-0">
+                    {getNotificationIcon(notification.type)}
                   </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="follows">
-            <div className="space-y-2">
-              {notifications
-                .filter(n => n.type === 'follow')
-                .map(notification => (
-                  <div
-                    key={notification.id}
-                    onClick={() => navigate(`/profile/${notification.fromUserId}`)}
-                    className="bg-[#1a1a1a] rounded-xl p-4 border border-white/10 flex items-center space-x-4 cursor-pointer hover:bg-white/5 transition-colors"
-                  >
-                    <UserPlus className="w-5 h-5 text-green-500" />
-                    <img
-                      src={notification.fromUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${notification.fromUser?.username}`}
-                      alt={notification.fromUser?.displayName}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <p className="text-white">
-                        <span className="font-medium">{notification.fromUser?.displayName}</span>
-                        {' '}
-                        <span className="text-gray-400">started following you</span>
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                      </p>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center space-x-3 flex-1">
+                        {notification.actor && (
+                          <img
+                            src={notification.actor.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${notification.actor.username}`}
+                            alt={notification.actor.displayName}
+                            className="w-10 h-10 rounded-full border border-[#B4A7D6]/20"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-[#e5e5e5] font-light leading-relaxed">
+                            {notification.text}
+                          </p>
+                          <p className="text-xs text-[#9ca3af] mt-1 font-light">
+                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="interactions">
-            <div className="space-y-2">
-              {notifications
-                .filter(n => n.type === 'like' || n.type === 'comment' || n.type === 'reaction')
-                .map(notification => (
-                  <div
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
-                    className="bg-[#1a1a1a] rounded-xl p-4 border border-white/10 flex items-center space-x-4 cursor-pointer hover:bg-white/5 transition-colors"
-                  >
-                    <div className="flex-shrink-0">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <img
-                      src={notification.fromUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${notification.fromUser?.username}`}
-                      alt={notification.fromUser?.displayName}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <p className="text-white">
-                        <span className="font-medium">{notification.fromUser?.displayName}</span>
-                        {' '}
-                        <span className="text-gray-400">{getNotificationText(notification)}</span>
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                      </p>
-                    </div>
-                    {notification.postImage && (
-                      <img
-                        src={notification.postImage}
-                        alt="Post"
-                        className="w-12 h-12 rounded object-cover"
-                      />
-                    )}
-                  </div>
-                ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );
