@@ -3,28 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useInView } from 'react-intersection-observer';
-import { Plus, X, Image as ImageIcon, Video, Smile } from 'lucide-react';
+import { Plus, X, Image as ImageIcon, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/components/AppLayout';
-import StoriesBar from '@/components/StoriesBar';
 import PostCard from '@/components/PostCard';
-import CreateStoryDialog from '@/components/CreateStoryDialog';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const moods = [
-  { value: 'happy', label: '😊 Happy', emoji: '😊' },
-  { value: 'sad', label: '😢 Sad', emoji: '😢' },
-  { value: 'excited', label: '🎉 Excited', emoji: '🎉' },
-  { value: 'thoughtful', label: '🤔 Thoughtful', emoji: '🤔' },
-  { value: 'grateful', label: '🙏 Grateful', emoji: '🙏' },
-  { value: 'anxious', label: '😰 Anxious', emoji: '😰' }
+  { value: 'lonely', label: '🌧️ lonely', emoji: '🌧️' },
+  { value: 'healing', label: '🌱 healing', emoji: '🌱' },
+  { value: 'angry', label: '🌪️ angry', emoji: '🌪️' },
+  { value: 'grateful', label: '🙏 grateful', emoji: '🙏' },
+  { value: 'anxious', label: '😰 anxious', emoji: '😰' },
+  { value: 'numb', label: '🌫️ numb', emoji: '🌫️' },
+  { value: 'thoughtful', label: '🤔 thoughtful', emoji: '🤔' },
+  { value: 'sad', label: '😢 sad', emoji: '😢' }
 ];
 
 function HomePage({ user, onLogout }) {
@@ -32,7 +32,6 @@ function HomePage({ user, onLogout }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [showCreateStory, setShowCreateStory] = useState(false);
   const [postForm, setPostForm] = useState({
     text: '',
     imageUrl: '',
@@ -58,7 +57,7 @@ function HomePage({ user, onLogout }) {
         setPosts(prev => [...prev, ...response.data]);
       }
     } catch (error) {
-      toast.error('Failed to load posts');
+      toast.error('failed to load feed');
     } finally {
       setLoading(false);
     }
@@ -79,7 +78,7 @@ function HomePage({ user, onLogout }) {
   const handleCreatePost = async (e) => {
     e.preventDefault();
     if (!postForm.text.trim() && !postForm.imageUrl) {
-      toast.error('Post cannot be empty');
+      toast.error('post cannot be empty');
       return;
     }
 
@@ -95,9 +94,9 @@ function HomePage({ user, onLogout }) {
       });
       setImagePreview('');
       setShowCreatePost(false);
-      toast.success('Post created successfully!');
+      toast.success('your thought is shared');
     } catch (error) {
-      toast.error('Failed to create post');
+      toast.error('failed to create post');
     }
   };
 
@@ -105,7 +104,7 @@ function HomePage({ user, onLogout }) {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB');
+        toast.error('file size must be less than 10mb');
         return;
       }
 
@@ -116,15 +115,14 @@ function HomePage({ user, onLogout }) {
           const base64 = reader.result;
           setImagePreview(base64);
           
-          // Upload to backend
           const response = await axios.post(`${API}/upload/image`, {
             imageData: base64
           });
           
           setPostForm({ ...postForm, imageUrl: response.data.imageUrl });
-          toast.success('Image uploaded!');
+          toast.success('image uploaded');
         } catch (error) {
-          toast.error('Failed to upload image');
+          toast.error('failed to upload image');
         } finally {
           setUploading(false);
         }
@@ -143,37 +141,55 @@ function HomePage({ user, onLogout }) {
 
   return (
     <AppLayout user={user} onLogout={onLogout}>
-      <div className="max-w-2xl mx-auto pb-20">
-        {/* Stories Bar */}
-        <StoriesBar user={user} onCreateStory={() => setShowCreateStory(true)} />
+      <div className="max-w-2xl mx-auto pb-20 px-4">
+        {/* Welcome message */}
+        <div className="mb-8 text-center pt-6">
+          <h1 className="text-3xl font-light text-[#e5e5e5] mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            your space
+          </h1>
+          <p className="text-[#9ca3af] font-light text-sm">
+            say it... even if it's messy
+          </p>
+        </div>
 
         {/* Create Post Button */}
-        <div className="bg-[#1a1a1a] rounded-xl p-4 mb-6 border border-white/10">
+        <div className="glass-card rounded-2xl p-5 mb-8 slow-transition hover:border-[#B4A7D6]/20">
           <button
+            data-testid="create-post-trigger"
             onClick={() => setShowCreatePost(true)}
-            className="w-full flex items-center space-x-3 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+            className="w-full flex items-center space-x-4 px-5 py-4 bg-[#2a2f3f]/30 hover:bg-[#2a2f3f]/50 rounded-xl slow-transition"
           >
-            <img
-              src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
-              alt={user.displayName}
-              className="w-10 h-10 rounded-full"
-            />
-            <span className="text-gray-400 flex-1 text-left">What's on your mind?</span>
-            <Plus className="w-5 h-5 text-purple-400" />
+            {postForm.isAnonymous ? (
+              <div className="w-11 h-11 rounded-full bg-[#B4A7D6]/10 flex items-center justify-center">
+                <User className="w-5 h-5 text-[#B4A7D6]/50" />
+              </div>
+            ) : (
+              <img
+                src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
+                alt={user.displayName}
+                className="w-11 h-11 rounded-full border border-[#B4A7D6]/20"
+              />
+            )}
+            <span className="text-[#9ca3af] flex-1 text-left font-light">
+              what's on your mind?
+            </span>
+            <Plus className="w-5 h-5 text-[#B4A7D6]" />
           </button>
         </div>
 
         {/* Feed */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {loading && posts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-              <p className="text-gray-400 mt-4">Loading feed...</p>
+            <div className="text-center py-16">
+              <div className="w-12 h-12 border-2 border-[#B4A7D6]/30 border-t-[#B4A7D6] rounded-full animate-spin mx-auto"></div>
+              <p className="text-[#9ca3af] mt-4 font-light">loading thoughts...</p>
             </div>
           ) : posts.length === 0 ? (
-            <div className="text-center py-12 bg-[#1a1a1a] rounded-xl border border-white/10">
-              <p className="text-gray-400 text-lg">No posts yet</p>
-              <p className="text-gray-500 text-sm mt-2">Follow people to see their posts here</p>
+            <div className="text-center py-16 glass-card rounded-2xl">
+              <p className="text-[#9ca3af] text-lg font-light">no posts yet</p>
+              <p className="text-[#6b7280] text-sm mt-2 font-light">
+                follow people to see their thoughts
+              </p>
             </div>
           ) : (
             posts.map(post => (
@@ -187,9 +203,9 @@ function HomePage({ user, onLogout }) {
             ))
           )}
 
-          {hasMore && !loading && (
+          {hasMore && !loading && posts.length > 0 && (
             <div ref={loadMoreRef} className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
+              <div className="w-8 h-8 border-2 border-[#B4A7D6]/30 border-t-[#B4A7D6] rounded-full animate-spin mx-auto"></div>
             </div>
           )}
         </div>
@@ -197,112 +213,137 @@ function HomePage({ user, onLogout }) {
 
       {/* Create Post Dialog */}
       <Dialog open={showCreatePost} onOpenChange={setShowCreatePost}>
-        <DialogContent className="bg-[#1a1a1a] border-white/10 text-white max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Create Post</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreatePost} className="space-y-4">
-            <Textarea
-              placeholder="What's on your mind?"
-              value={postForm.text}
-              onChange={(e) => setPostForm({ ...postForm, text: e.target.value })}
-              className="bg-white/5 border-white/10 text-white min-h-[120px] resize-none"
-            />
-
-            {imagePreview && (
-              <div className="relative">
-                <img src={imagePreview} alt="Preview" className="w-full rounded-lg" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImagePreview('');
-                    setPostForm({ ...postForm, imageUrl: '' });
-                  }}
-                  className="absolute top-2 right-2 p-2 bg-black/50 rounded-full hover:bg-black/70"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Mood (optional)</Label>
-                <Select value={postForm.mood} onValueChange={(value) => setPostForm({ ...postForm, mood: value })}>
-                  <SelectTrigger className="bg-white/5 border-white/10">
-                    <SelectValue placeholder="Select mood" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-white/10">
-                    {moods.map(mood => (
-                      <SelectItem key={mood.value} value={mood.value}>{mood.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        <DialogContent className="bg-[#212530] border-[#B4A7D6]/10 text-[#e5e5e5] max-w-2xl glass-card calm-shadow">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-light mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                share a thought
+              </h2>
+              <p className="text-sm text-[#9ca3af] font-light">
+                no pressure, no judgment
+              </p>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    disabled={uploading}
-                  />
-                  <div className="flex items-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                    <ImageIcon className="w-5 h-5 text-purple-400" />
-                    <span className="text-sm">{uploading ? 'Uploading...' : 'Photo'}</span>
+            <form onSubmit={handleCreatePost} className="space-y-5">
+              <Textarea
+                data-testid="post-text-input"
+                placeholder="say it... even if it's messy"
+                value={postForm.text}
+                onChange={(e) => setPostForm({ ...postForm, text: e.target.value })}
+                className="bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] placeholder:text-[#6b7280] min-h-[150px] resize-none slow-transition focus:border-[#B4A7D6]/30 text-base leading-relaxed"
+              />
+
+              {imagePreview && (
+                <div className="relative rounded-xl overflow-hidden">
+                  <img src={imagePreview} alt="Preview" className="w-full rounded-xl" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImagePreview('');
+                      setPostForm({ ...postForm, imageUrl: '' });
+                    }}
+                    className="absolute top-3 right-3 p-2 bg-[#1a1d28]/80 rounded-full hover:bg-[#1a1d28] slow-transition"
+                  >
+                    <X className="w-4 h-4 text-[#e5e5e5]" />
+                  </button>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-[#e5e5e5] font-light text-sm mb-2 block">
+                    how are you feeling? (optional)
+                  </Label>
+                  <Select 
+                    value={postForm.mood} 
+                    onValueChange={(value) => setPostForm({ ...postForm, mood: value })}
+                  >
+                    <SelectTrigger 
+                      data-testid="mood-selector"
+                      className="bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] slow-transition h-11"
+                    >
+                      <SelectValue placeholder="select a mood" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#212530] border-[#B4A7D6]/10 glass-card">
+                      {moods.map(mood => (
+                        <SelectItem 
+                          key={mood.value} 
+                          value={mood.value}
+                          className="hover:bg-[#B4A7D6]/10 cursor-pointer"
+                        >
+                          {mood.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                    <div className="flex items-center space-x-2 px-4 py-2.5 bg-[#2a2f3f]/30 hover:bg-[#2a2f3f]/50 rounded-lg slow-transition">
+                      <ImageIcon className="w-5 h-5 text-[#B4A7D6]" />
+                      <span className="text-sm font-light text-[#e5e5e5]">
+                        {uploading ? 'uploading...' : 'add image'}
+                      </span>
+                    </div>
+                  </label>
+
+                  <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        data-testid="comments-toggle"
+                        checked={postForm.commentsEnabled}
+                        onCheckedChange={(checked) => setPostForm({ ...postForm, commentsEnabled: checked })}
+                        className="data-[state=checked]:bg-[#B4A7D6]"
+                      />
+                      <Label className="text-sm font-light text-[#9ca3af]">
+                        allow thoughts
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        data-testid="anonymous-toggle"
+                        checked={postForm.isAnonymous}
+                        onCheckedChange={(checked) => setPostForm({ ...postForm, isAnonymous: checked })}
+                        className="data-[state=checked]:bg-[#B4A7D6]"
+                      />
+                      <Label className="text-sm font-light text-[#9ca3af]">
+                        post anonymously
+                      </Label>
+                    </div>
                   </div>
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={postForm.commentsEnabled}
-                    onCheckedChange={(checked) => setPostForm({ ...postForm, commentsEnabled: checked })}
-                  />
-                  <Label className="text-sm">Comments</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={postForm.isAnonymous}
-                    onCheckedChange={(checked) => setPostForm({ ...postForm, isAnonymous: checked })}
-                  />
-                  <Label className="text-sm">Anonymous</Label>
                 </div>
               </div>
-            </div>
 
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowCreatePost(false)}
-                className="border-white/10"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={uploading}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                Post
-              </Button>
-            </div>
-          </form>
+              <div className="flex justify-end space-x-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreatePost(false)}
+                  className="border-[#B4A7D6]/20 text-[#e5e5e5] hover:bg-[#B4A7D6]/10 slow-transition"
+                >
+                  cancel
+                </Button>
+                <Button
+                  type="submit"
+                  data-testid="post-submit"
+                  disabled={uploading || (!postForm.text.trim() && !postForm.imageUrl)}
+                  className="bg-[#B4A7D6] hover:bg-[#a294c4] text-[#1a1d28] slow-transition"
+                >
+                  share thought
+                </Button>
+              </div>
+            </form>
+          </div>
         </DialogContent>
       </Dialog>
-
-      {/* Create Story Dialog */}
-      <CreateStoryDialog
-        open={showCreateStory}
-        onOpenChange={setShowCreateStory}
-        user={user}
-      />
     </AppLayout>
   );
 }
