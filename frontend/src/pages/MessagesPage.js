@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { ArrowLeft, Send, Image as ImageIcon, X } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { ArrowLeft, Send, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
+import AppLayout from '@/components/AppLayout';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -18,7 +18,6 @@ function MessagesPage({ user, onLogout }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
-  const [imagePreview, setImagePreview] = useState('');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -35,12 +34,16 @@ function MessagesPage({ user, onLogout }) {
     scrollToBottom();
   }, [messages]);
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const loadConversations = async () => {
     try {
       const response = await axios.get(`${API}/conversations`);
       setConversations(response.data);
     } catch (error) {
-      toast.error('Failed to load conversations');
+      toast.error('failed to load conversations');
     }
   };
 
@@ -53,234 +56,172 @@ function MessagesPage({ user, onLogout }) {
       setSelectedUser(userRes.data);
       setMessages(messagesRes.data);
     } catch (error) {
-      toast.error('Failed to load messages');
+      toast.error('failed to load messages');
     }
   };
 
   const selectConversation = (conv) => {
-    navigate(`/messages/${conv.userId}`);
-    setSelectedUser(conv.user);
-    loadChatUser(conv.userId);
+    navigate(`/messages/${conv.user.id}`);
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!messageText.trim() && !imagePreview) return;
+    if (!messageText.trim()) return;
 
     try {
       const response = await axios.post(`${API}/messages`, {
         receiverId: selectedUser.id,
-        content: messageText,
-        imageUrl: imagePreview || null
+        text: messageText
       });
       setMessages([...messages, response.data]);
       setMessageText('');
-      setImagePreview('');
       loadConversations();
     } catch (error) {
-      toast.error('Failed to send message');
+      toast.error('failed to send message');
     }
-  };
-
-  const handleTyping = () => {
-    // Typing indicator functionality can be added later with WebSocket
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <div className="min-h-screen bg-void flex">
-      {/* Conversations List */}
-      {!chatUserId && (
-        <div className="w-full max-w-md mx-auto">
-          <div className="sticky top-0 z-40 backdrop-blur-xl bg-void/80 border-b border-white/5">
-            <div className="px-4 py-4">
-              <h1 className="font-playfair text-2xl font-bold text-white" data-testid="messages-title">Messages</h1>
+    <AppLayout user={user} onLogout={onLogout}>
+      <div className="h-[calc(100vh-2rem)] max-w-6xl mx-auto px-4 pb-6">
+        <div className="glass-card rounded-2xl h-full overflow-hidden flex">
+          {/* Conversations List */}
+          <div className={`w-full lg:w-96 border-r border-[#B4A7D6]/10 ${chatUserId ? 'hidden lg:block' : 'block'}`}>
+            <div className="p-6 border-b border-[#B4A7D6]/10">
+              <h1 
+                className="text-2xl font-light text-[#e5e5e5]"
+                style={{ fontFamily: 'Manrope, sans-serif' }}
+              >
+                messages
+              </h1>
             </div>
-          </div>
-
-          <div className="divide-y divide-zinc-900" data-testid="conversations-list">
-            {conversations.length === 0 ? (
-              <div className="text-center py-12 text-zinc-500">
-                No conversations yet
-              </div>
-            ) : (
-              conversations.map((conv) => (
-                <button
-                  key={conv.userId}
-                  data-testid="conversation-item"
-                  onClick={() => selectConversation(conv)}
-                  className="w-full flex items-start gap-3 p-4 hover:bg-zinc-900/30 transition-colors text-left"
-                >
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={conv.user.avatar} />
-                    <AvatarFallback className="bg-zinc-800 text-white">
-                      {conv.user.displayName.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-white">{conv.user.displayName}</span>
-                      {conv.lastMessage && (
-                        <span className="text-xs text-zinc-500 font-mono">
-                          {formatDistanceToNow(new Date(conv.lastMessage.createdAt), { addSuffix: true })}
-                        </span>
-                      )}
-                    </div>
-                    {conv.lastMessage && (
-                      <p className="text-sm text-zinc-400 truncate">{conv.lastMessage.content}</p>
-                    )}
-                    {conv.unreadCount > 0 && (
-                      <span className="inline-block mt-1 px-2 py-0.5 bg-moonlight text-white text-xs rounded-full">
-                        {conv.unreadCount}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Chat View */}
-      {chatUserId && selectedUser && (
-        <div className="w-full max-w-md mx-auto flex flex-col h-screen">
-          {/* Chat Header */}
-          <div className="sticky top-0 z-40 backdrop-blur-xl bg-void/80 border-b border-white/5">
-            <div className="px-4 py-4 flex items-center gap-3">
-              <Button
-                data-testid="back-to-conversations-btn"
-                variant="ghost"
-                onClick={() => navigate('/messages')}
-                className="text-white hover:text-moonlight"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <Avatar
-                className="w-10 h-10 cursor-pointer"
-                onClick={() => navigate(`/profile/${selectedUser.id}`)}
-              >
-                <AvatarImage src={selectedUser.avatar} />
-                <AvatarFallback className="bg-zinc-800 text-white">
-                  {selectedUser.displayName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div
-                className="flex-1 cursor-pointer"
-                onClick={() => navigate(`/profile/${selectedUser.id}`)}
-              >
-                <div className="font-medium text-white" data-testid="chat-user-name">{selectedUser.displayName}</div>
-                <div className="text-xs text-zinc-500">@{selectedUser.username}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4" data-testid="messages-container">
-            {messages.map((msg) => {
-              const isSent = msg.senderId === user.id;
-              return (
-                <div
-                  key={msg.id}
-                  data-testid="message-item"
-                  className={`flex ${isSent ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`max-w-[75%] space-y-1`}>
-                    <div
-                      className={`rounded-2xl px-4 py-3 ${
-                        isSent
-                          ? 'bg-moonlight text-white'
-                          : 'bg-zinc-900/50 text-white'
-                      }`}
-                    >
-                      {msg.imageUrl && (
-                        <img
-                          src={msg.imageUrl}
-                          alt="Attachment"
-                          className="rounded-xl max-w-full mb-2 max-h-64 object-cover"
-                        />
-                      )}
-                      <p className="text-sm">{msg.content}</p>
-                    </div>
-                    <div
-                      className={`text-xs text-zinc-500 font-mono ${
-                        isSent ? 'text-right' : 'text-left'
-                      }`}
-                    >
-                      {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
-                      {isSent && msg.seen && <span className="ml-2">✓✓</span>}
-                    </div>
-                  </div>
+            <div className="overflow-y-auto h-[calc(100%-5rem)]">
+              {conversations.length === 0 ? (
+                <div className="text-center py-16 px-4">
+                  <MessageCircle className="w-12 h-12 text-[#9ca3af] mx-auto mb-4" />
+                  <p className="text-[#9ca3af] font-light">no conversations yet</p>
                 </div>
-              );
-            })}
-            {/* Typing indicator removed for now */}
-            <div ref={messagesEndRef} />
+              ) : (
+                conversations.map(conv => (
+                  <div
+                    key={conv.user.id}
+                    data-testid={`conversation-${conv.user.id}`}
+                    onClick={() => selectConversation(conv)}
+                    className={`p-5 border-b border-[#B4A7D6]/10 cursor-pointer slow-transition hover:bg-[#B4A7D6]/5 ${
+                      selectedUser?.id === conv.user.id ? 'bg-[#B4A7D6]/10' : ''
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={conv.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.user.username}`}
+                        alt={conv.user.displayName}
+                        className="w-12 h-12 rounded-full border border-[#B4A7D6]/20"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="text-[#e5e5e5] font-medium truncate">{conv.user.displayName}</h3>
+                          {conv.lastMessageTime && (
+                            <span className="text-xs text-[#9ca3af] font-light">
+                              {formatDistanceToNow(new Date(conv.lastMessageTime), { addSuffix: true })}
+                            </span>
+                          )}
+                        </div>
+                        {conv.lastMessage && (
+                          <p className="text-sm text-[#9ca3af] truncate font-light">{conv.lastMessage}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          {/* Message Input */}
-          <div className="border-t border-white/5 p-4">
-            {imagePreview && (
-              <div className="mb-3 relative inline-block">
-                <img src={imagePreview} alt="Preview" className="rounded-xl max-h-24 object-cover" />
+          {/* Chat Area */}
+          {selectedUser ? (
+            <div className="flex-1 flex flex-col">
+              {/* Chat Header */}
+              <div className="p-5 border-b border-[#B4A7D6]/10 flex items-center space-x-4">
                 <button
-                  onClick={() => setImagePreview('')}
-                  className="absolute -top-2 -right-2 bg-black/70 rounded-full p-1 text-white hover:bg-black transition-colors"
+                  onClick={() => navigate('/messages')}
+                  className="lg:hidden p-2 hover:bg-[#B4A7D6]/10 rounded-lg slow-transition"
                 >
-                  <X className="w-4 h-4" />
+                  <ArrowLeft className="w-5 h-5 text-[#e5e5e5]" />
                 </button>
+                <img
+                  src={selectedUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedUser.username}`}
+                  alt={selectedUser.displayName}
+                  className="w-10 h-10 rounded-full border border-[#B4A7D6]/20"
+                />
+                <div>
+                  <h2 className="text-[#e5e5e5] font-medium">{selectedUser.displayName}</h2>
+                  <p className="text-sm text-[#9ca3af] font-light">@{selectedUser.username}</p>
+                </div>
               </div>
-            )}
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-              <label htmlFor="message-image-upload" className="cursor-pointer text-zinc-400 hover:text-white transition-colors">
-                <ImageIcon className="w-5 h-5" />
-              </label>
-              <input
-                id="message-image-upload"
-                data-testid="message-image-input"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <Input
-                data-testid="message-input"
-                type="text"
-                placeholder="Type a message..."
-                value={messageText}
-                onChange={(e) => {
-                  setMessageText(e.target.value);
-                  handleTyping();
-                }}
-                className="flex-1 bg-zinc-900/50 border-transparent focus:border-moonlight/50 rounded-full text-white placeholder:text-zinc-600"
-              />
-              <Button
-                data-testid="send-message-btn"
-                type="submit"
-                disabled={!messageText.trim() && !imagePreview}
-                className="bg-moonlight hover:bg-moonlight-hover text-white rounded-full w-10 h-10 p-0"
-              >
-                <Send className="w-5 h-5" />
-              </Button>
-            </form>
-          </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {messages.map((message, index) => {
+                  const isOwn = message.senderId === user.id;
+                  return (
+                    <div
+                      key={index}
+                      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                    >
+                      <div
+                        className={`max-w-[70%] rounded-2xl px-5 py-3 ${
+                          isOwn
+                            ? 'bg-[#B4A7D6] text-[#1a1d28]'
+                            : 'bg-[#2a2f3f]/50 text-[#e5e5e5]'
+                        }`}
+                      >
+                        <p className="font-light leading-relaxed">{message.text}</p>
+                        <p className={`text-xs mt-1.5 font-light ${isOwn ? 'text-[#1a1d28]/60' : 'text-[#9ca3af]'}`}>
+                          {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Message Input */}
+              <form onSubmit={handleSendMessage} className="p-5 border-t border-[#B4A7D6]/10">
+                <div className="flex items-center space-x-3">
+                  <Input
+                    data-testid="message-input"
+                    type="text"
+                    placeholder="type a message..."
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    className="flex-1 bg-[#2a2f3f]/30 border-[#B4A7D6]/10 text-[#e5e5e5] placeholder:text-[#6b7280] h-11 slow-transition focus:border-[#B4A7D6]/30"
+                  />
+                  <Button
+                    type="submit"
+                    data-testid="send-button"
+                    disabled={!messageText.trim()}
+                    className="bg-[#B4A7D6] hover:bg-[#a294c4] text-[#1a1d28] h-11 w-11 p-0 slow-transition"
+                  >
+                    <Send className="w-5 h-5" />
+                  </Button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <div className="flex-1 hidden lg:flex items-center justify-center">
+              <div className="text-center">
+                <MessageCircle className="w-16 h-16 text-[#9ca3af] mx-auto mb-4" />
+                <p className="text-[#9ca3af] text-lg font-light">select a conversation</p>
+                <p className="text-[#6b7280] text-sm mt-2 font-light">
+                  choose someone to start messaging
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </AppLayout>
   );
 }
 
