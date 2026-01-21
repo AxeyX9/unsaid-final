@@ -80,7 +80,7 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    toast.success('Logged out successfully');
+    toast.success('goodbye');
   };
 
   if (loading) {
